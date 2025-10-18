@@ -43,6 +43,29 @@ jobs:
           
           echo "SSH 用户创建成功"
 
+      - name: Configure Firewall and Open Ports
+        run: |
+          # 安装 iptables-persistent 以保存防火墙规则
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
+          
+          # 开放常用端口
+          sudo iptables -I INPUT -p tcp --dport 22 -j ACCEPT    # SSH
+          sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT  # HTTP Alt
+          sudo iptables -I INPUT -p udp --dport 8080 -j ACCEPT  # HTTP Alt UDP
+          sudo iptables -I INPUT -p tcp --dport 8388 -j ACCEPT  # Shadowsocks
+          sudo iptables -I INPUT -p udp --dport 8388 -j ACCEPT  # Shadowsocks UDP
+          sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT   # HTTPS
+          sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT    # HTTP
+          
+          # 保存 iptables 规则
+          sudo netfilter-persistent save
+          
+          # 显示已开放的端口
+          echo "已开放的端口："
+          sudo iptables -L INPUT -n --line-numbers | grep ACCEPT | grep dpt:
+          
+          echo "防火墙配置完成"
+
       - name: Install Tailscale
         run: |
           # 添加 Tailscale 的包签名密钥和仓库（基于官方文档）
